@@ -24,6 +24,16 @@
             android:exported="true"
             android:theme="@style/Theme.SmartExpense" />
 
+        <activity
+            android:name=".HistoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartExpense" />
+
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartExpense" />
+
     </application>
 
 </manifest>
