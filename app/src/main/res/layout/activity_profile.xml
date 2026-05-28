@@ -12,35 +12,25 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/title_profile"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
         <Button
             android:id="@+id/btnWeb"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="@string/btn_visit_ai_studio" />
+            android:layout_marginBottom="16dp"
+            android:text="Visit Website" />
 
         <Button
             android:id="@+id/btnEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/btn_send_feedback" />
-
+            android:text="Contact Support" />
     </LinearLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="65dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
         app:menu="@menu/bottom_nav_menu" />
 
 </RelativeLayout>
