@@ -19,6 +19,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -76,15 +85,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String text = inputText.getText().toString().trim();
                 if (!text.isEmpty()) {
-                    String amount = findAmount(text);
-                    String category = selectedCategory.isEmpty() ? findCategory(text) : selectedCategory;
-                    String date = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(new Date());
-                    String record = date + " | " + amount + " TZS | " + category + " | " + text;
-
-                    saveRecord(record);
-                    inputText.setText("");
-                    spinnerCategory.setSelection(0);
-                    Toast.makeText(MainActivity.this, "Saved: " + amount + " TZS, " + category, Toast.LENGTH_LONG).show();
+                    analyzeExpense(text);
                 } else {
                     Toast.makeText(MainActivity.this, "Please enter an expense", Toast.LENGTH_SHORT).show();
                 }
@@ -134,6 +135,138 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void analyzeExpense(final String text) {
+        final String categoryOverride = selectedCategory;
+        btnSubmit.setEnabled(false);
+        Toast.makeText(this, "AI analyzing expense...", Toast.LENGTH_SHORT).show();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ExpenseResult result;
+                boolean usedAi = false;
+
+                try {
+                    if (BuildConfig.GEMINI_API_KEY == null || BuildConfig.GEMINI_API_KEY.trim().isEmpty()) {
+                        result = fallbackExpense(text);
+                    } else {
+                        result = askGemini(text);
+                        usedAi = true;
+                    }
+                } catch (Exception e) {
+                    result = fallbackExpense(text);
+                }
+
+                if (!categoryOverride.isEmpty()) {
+                    result.category = categoryOverride;
+                }
+
+                final ExpenseResult finalResult = result;
+                final boolean finalUsedAi = usedAi;
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        saveExpense(text, finalResult.amount, finalResult.category);
+                        btnSubmit.setEnabled(true);
+                        inputText.setText("");
+                        spinnerCategory.setSelection(0);
+
+                        String source = finalUsedAi ? "AI" : "Local";
+                        Toast.makeText(
+                                MainActivity.this,
+                                source + " saved: " + finalResult.amount + " TZS, " + finalResult.category,
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private ExpenseResult askGemini(String text) throws Exception {
+        URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(20000);
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("X-goog-api-key", BuildConfig.GEMINI_API_KEY);
+
+        JSONObject requestBody = new JSONObject();
+        JSONArray contents = new JSONArray();
+        JSONObject content = new JSONObject();
+        JSONArray parts = new JSONArray();
+        JSONObject part = new JSONObject();
+
+        String prompt = "Extract this expense into JSON only. "
+                + "Use keys amount and category. "
+                + "Category must be Food, Transport, Shopping, Bills, or General. "
+                + "Return example: {\"amount\":\"15000\",\"category\":\"Food\"}. "
+                + "Expense: " + text;
+
+        part.put("text", prompt);
+        parts.put(part);
+        content.put("parts", parts);
+        contents.put(content);
+        requestBody.put("contents", contents);
+
+        OutputStream outputStream = connection.getOutputStream();
+        outputStream.write(requestBody.toString().getBytes("UTF-8"));
+        outputStream.close();
+
+        int responseCode = connection.getResponseCode();
+        InputStream inputStream = responseCode >= 200 && responseCode < 300
+                ? connection.getInputStream()
+                : connection.getErrorStream();
+        String response = readStream(inputStream);
+        connection.disconnect();
+
+        if (responseCode < 200 || responseCode >= 300) {
+            throw new Exception("Gemini request failed: " + responseCode);
+        }
+
+        JSONObject json = new JSONObject(response);
+        String modelText = json.getJSONArray("candidates")
+                .getJSONObject(0)
+                .getJSONObject("content")
+                .getJSONArray("parts")
+                .getJSONObject(0)
+                .getString("text")
+                .trim();
+
+        modelText = modelText.replace("```json", "").replace("```", "").trim();
+        JSONObject parsed = new JSONObject(modelText);
+        return new ExpenseResult(
+                parsed.optString("amount", findAmount(text)).replace(",", ""),
+                parsed.optString("category", findCategory(text))
+        );
+    }
+
+    private String readStream(InputStream inputStream) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder builder = new StringBuilder();
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+        }
+
+        reader.close();
+        return builder.toString();
+    }
+
+    private ExpenseResult fallbackExpense(String text) {
+        return new ExpenseResult(findAmount(text), findCategory(text));
+    }
+
+    private void saveExpense(String text, String amount, String category) {
+        String date = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(new Date());
+        String record = date + " | " + amount + " TZS | " + category + " | " + text;
+        saveRecord(record);
+    }
+
     private String findAmount(String text) {
         Pattern pattern = Pattern.compile("(\\d[\\d,]*)");
         Matcher matcher = pattern.matcher(text);
@@ -176,5 +309,15 @@ public class MainActivity extends AppCompatActivity {
         String oldHistory = prefs.getString(KEY_HISTORY, "");
         String newHistory = record + "\n" + oldHistory;
         prefs.edit().putString(KEY_HISTORY, newHistory).apply();
+    }
+
+    private static class ExpenseResult {
+        String amount;
+        String category;
+
+        ExpenseResult(String amount, String category) {
+            this.amount = amount;
+            this.category = category;
+        }
     }
 }
