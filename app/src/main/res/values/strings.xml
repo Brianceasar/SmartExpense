@@ -14,4 +14,9 @@
     <!-- Options Menu -->
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>
+
+    <!-- Profile Screen -->
+    <string name="title_profile">User Profile</string>
+    <string name="btn_visit_ai_studio">Visit AI Studio</string>
+    <string name="btn_send_feedback">Send Feedback</string>
 </resources>
