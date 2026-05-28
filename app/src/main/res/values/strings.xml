@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">SmartExpense</string>
+    <string name="title_smart_expense_ai">Smart Expense AI</string>
+    <string name="subtitle_describe_expense">Describe your expense in plain text below</string>
+    <string name="hint_expense_example">e.g., Spent 15k on pizza with friends last night</string>
+    <string name="label_category_override">Category Backup Override (Optional):</string>
+    <string name="btn_analyze_ai">Analyze with AI</string>
+
+    <!-- Navigation Titles -->
+    <string name="nav_ai_log">AI Log</string>
+    <string name="nav_history">History</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Options Menu -->
+    <string name="action_settings">Settings</string>
+    <string name="action_about">About</string>
 </resources>
