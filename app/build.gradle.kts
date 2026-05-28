@@ -17,6 +17,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -43,7 +46,7 @@ tasks.register("androidTestClasses") {
 dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation("androidx.core:core:1.13.1")
+    implementation(libs.androidx.core)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

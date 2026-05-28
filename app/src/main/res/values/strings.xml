@@ -5,6 +5,8 @@
     <string name="hint_expense_example">e.g., Spent 15k on pizza with friends last night</string>
     <string name="label_category_override">Category Backup Override (Optional):</string>
     <string name="btn_analyze_ai">Analyze with AI</string>
+    <string name="title_history">Expense History</string>
+    <string name="empty_history">No transactions yet</string>
 
     <!-- Navigation Titles -->
     <string name="nav_ai_log">AI Log</string>

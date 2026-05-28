@@ -20,9 +20,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="Smart Expense AI"
+            android:text="@string/title_smart_expense_ai"
             android:textSize="24sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/subtitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:text="@string/subtitle_describe_expense"
+            android:textSize="14sp" />
     </LinearLayout>
 
     <!-- Center Content -->
@@ -39,15 +48,24 @@
             android:layout_height="wrap_content"
             android:minHeight="120dp"
             android:gravity="top|start"
-            android:hint="Spent 15k on pizza with friends"
+            android:autofillHints="transactionDescription"
+            android:hint="@string/hint_expense_example"
             android:inputType="textMultiLine"
             android:padding="12dp" />
+
+        <TextView
+            android:id="@+id/categoryLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/label_category_override"
+            android:textSize="14sp" />
 
         <Spinner
             android:id="@+id/spinnerCategory"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="4dp" />
 
         <Button
             android:id="@+id/btnSubmit"
@@ -55,7 +73,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:background="@drawable/gradient_button"
-            android:text="Submit"
+            android:text="@string/btn_analyze_ai"
             app:backgroundTint="@null" />
 
     </LinearLayout>

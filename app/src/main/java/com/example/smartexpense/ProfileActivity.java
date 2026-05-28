@@ -1,10 +1,12 @@
 package com.example.smartexpense;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +28,30 @@ public class ProfileActivity extends AppCompatActivity {
         btnEmail = (Button) findViewById(R.id.btnEmail);
         nav = (BottomNavigationView) findViewById(R.id.bottomNavigation);
         nav.setSelectedItemId(R.id.nav_profile);
+
+        btnWeb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent webIntent = new Intent(Intent.ACTION_VIEW);
+                webIntent.setData(Uri.parse("https://developer.android.com/guide"));
+                startActivity(webIntent);
+            }
+        });
+
+        btnEmail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+                emailIntent.setData(Uri.parse("mailto:support@smartexpense.local"));
+                emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Smart Expense AI Feedback");
+
+                if (emailIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(emailIntent);
+                } else {
+                    Toast.makeText(ProfileActivity.this, "No email app found", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         nav.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
