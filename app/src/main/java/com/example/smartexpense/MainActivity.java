@@ -3,6 +3,7 @@ package com.example.smartexpense;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String PREFS_NAME = "expense_data";
     private static final String KEY_HISTORY = "history";
+    private static final String TAG = "SmartExpenseAI";
+    private static final String GEMINI_MODEL = "gemini-2.5-flash";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,17 +147,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 ExpenseResult result;
-                boolean usedAi = false;
+                String source = "Local";
+                String errorMessage = "";
 
                 try {
                     if (BuildConfig.GEMINI_API_KEY == null || BuildConfig.GEMINI_API_KEY.trim().isEmpty()) {
                         result = fallbackExpense(text);
+                        errorMessage = "missing API key";
                     } else {
                         result = askGemini(text);
-                        usedAi = true;
+                        source = "AI";
                     }
                 } catch (Exception e) {
+                    Log.e(TAG, "Gemini failed, using local parser", e);
                     result = fallbackExpense(text);
+                    errorMessage = e.getMessage();
                 }
 
                 if (!categoryOverride.isEmpty()) {
@@ -162,7 +169,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 final ExpenseResult finalResult = result;
-                final boolean finalUsedAi = usedAi;
+                final String finalSource = source;
+                final String finalErrorMessage = errorMessage;
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -172,10 +180,15 @@ public class MainActivity extends AppCompatActivity {
                         inputText.setText("");
                         spinnerCategory.setSelection(0);
 
-                        String source = finalUsedAi ? "AI" : "Local";
+                        String message = finalSource + " saved: "
+                                + finalResult.amount + " TZS, " + finalResult.category;
+                        if (!finalSource.equals("AI") && !finalErrorMessage.isEmpty()) {
+                            message = message + " (" + finalErrorMessage + ")";
+                        }
+
                         Toast.makeText(
                                 MainActivity.this,
-                                source + " saved: " + finalResult.amount + " TZS, " + finalResult.category,
+                                message,
                                 Toast.LENGTH_LONG
                         ).show();
                     }
@@ -185,7 +198,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private ExpenseResult askGemini(String text) throws Exception {
-        URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent");
+        URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/"
+                + GEMINI_MODEL + ":generateContent");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setConnectTimeout(15000);
@@ -199,10 +213,12 @@ public class MainActivity extends AppCompatActivity {
         JSONObject content = new JSONObject();
         JSONArray parts = new JSONArray();
         JSONObject part = new JSONObject();
+        JSONObject generationConfig = new JSONObject();
 
         String prompt = "Extract this expense into JSON only. "
                 + "Use keys amount and category. "
                 + "Category must be Food, Transport, Shopping, Bills, or General. "
+                + "Use Food for meals, drinks, beer, restaurants, snacks, groceries, or eating out. "
                 + "Return example: {\"amount\":\"15000\",\"category\":\"Food\"}. "
                 + "Expense: " + text;
 
@@ -211,6 +227,8 @@ public class MainActivity extends AppCompatActivity {
         content.put("parts", parts);
         contents.put(content);
         requestBody.put("contents", contents);
+        generationConfig.put("responseMimeType", "application/json");
+        requestBody.put("generationConfig", generationConfig);
 
         OutputStream outputStream = connection.getOutputStream();
         outputStream.write(requestBody.toString().getBytes("UTF-8"));
@@ -224,7 +242,8 @@ public class MainActivity extends AppCompatActivity {
         connection.disconnect();
 
         if (responseCode < 200 || responseCode >= 300) {
-            throw new Exception("Gemini request failed: " + responseCode);
+            throw new Exception("Gemini HTTP " + responseCode + " for " + GEMINI_MODEL
+                    + ": " + truncate(response, 160));
         }
 
         JSONObject json = new JSONObject(response);
@@ -245,6 +264,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String readStream(InputStream inputStream) throws Exception {
+        if (inputStream == null) {
+            return "";
+        }
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder builder = new StringBuilder();
         String line;
@@ -255,6 +278,14 @@ public class MainActivity extends AppCompatActivity {
 
         reader.close();
         return builder.toString();
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+
+        return value.substring(0, maxLength) + "...";
     }
 
     private ExpenseResult fallbackExpense(String text) {
@@ -281,7 +312,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (lowerText.contains("pizza") || lowerText.contains("food")
                 || lowerText.contains("lunch") || lowerText.contains("dinner")
-                || lowerText.contains("restaurant")) {
+                || lowerText.contains("restaurant") || lowerText.contains("beer")
+                || lowerText.contains("drink") || lowerText.contains("grocery")
+                || lowerText.contains("snack")) {
             return "Food";
         }
 
