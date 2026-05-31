@@ -24,8 +24,10 @@ public class SplashActivity extends AppCompatActivity {
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
-                // Move to MainActivity
-                Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+                Class<?> nextActivity = AuthManager.isSignedIn(SplashActivity.this)
+                        ? DashboardActivity.class
+                        : LoginActivity.class;
+                Intent intent = new Intent(SplashActivity.this, nextActivity);
                 startActivity(intent);
                 // Clear the stack
                 finish();

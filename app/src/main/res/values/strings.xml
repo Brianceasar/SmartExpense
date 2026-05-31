@@ -10,7 +10,10 @@
 
     <!-- Navigation Titles -->
     <string name="nav_ai_log">AI Log</string>
+    <string name="nav_home">Home</string>
     <string name="nav_history">History</string>
+    <string name="nav_add">Add</string>
+    <string name="nav_insights">Insights</string>
     <string name="nav_profile">Profile</string>
 
     <!-- Options Menu -->
@@ -21,4 +24,75 @@
     <string name="title_profile">User Profile</string>
     <string name="btn_visit_ai_studio">Visit AI Studio</string>
     <string name="btn_send_feedback">Send Feedback</string>
+
+    <!-- Authentication -->
+    <string name="auth_master_your_money">Master Your Money</string>
+    <string name="auth_login_subtitle">Harness AI to track, categorize, and optimize your spending with precision.</string>
+    <string name="auth_ai_active">AI Intelligence Active</string>
+    <string name="auth_welcome_back">Welcome Back</string>
+    <string name="auth_sign_in_to_continue">Sign in to continue your financial journey.</string>
+    <string name="auth_email">Email Address</string>
+    <string name="auth_email_hint">name@company.com</string>
+    <string name="auth_signup_email_hint">john@example.com</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_password_hint">Password</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_keep_signed_in">Keep me signed in for 30 days</string>
+    <string name="auth_login">Login</string>
+    <string name="auth_no_account">Do not have an account yet?</string>
+    <string name="auth_signup">Sign Up</string>
+    <string name="auth_footer">2026 Smart Expense AI - Secure local access</string>
+    <string name="auth_create_account">Create Account</string>
+    <string name="auth_future_finance">Step into the future of finance.</string>
+    <string name="auth_full_name">Full Name</string>
+    <string name="auth_full_name_hint">John Doe</string>
+    <string name="auth_password_rule">Must be at least 6 characters.</string>
+    <string name="auth_terms">I agree to the Terms of Service and Privacy Policy.</string>
+    <string name="auth_have_account">Already have an account?</string>
+    <string name="auth_show_password">Show</string>
+    <string name="profile_name_label">Name</string>
+    <string name="profile_email_label">Email</string>
+    <string name="dashboard_total_label">Total spent this month</string>
+    <string name="dashboard_spending_overview">Spending Overview</string>
+    <string name="dashboard_last_days">Last 7 Days</string>
+    <string name="dashboard_recent_activity">Recent Activity</string>
+    <string name="dashboard_view_all">View All</string>
+    <string name="insights_title">Insights</string>
+    <string name="insights_subtitle">Suggestions to improve your spending habits.</string>
+    <string name="insight_one">Food spending is usually the easiest category to trim. Try setting a weekly meal budget before your next shopping trip.</string>
+    <string name="insight_two">Review recurring bills once a month and cancel subscriptions you have not used recently.</string>
+    <string name="insight_three">Log expenses daily so Smart Expense AI can make better category and budget suggestions.</string>
+    <string name="history_search_hint">Search merchants or categories...</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_food">Food</string>
+    <string name="history_filter_shopping">Shopping</string>
+    <string name="history_filter_transport">Transport</string>
+    <string name="empty_filtered_history">No matching transactions</string>
+    <string name="history_monthly_spending">Monthly Spending</string>
+    <string name="history_less_than_last_month">Less than last month</string>
+    <string name="history_recent_transactions">Recent Transactions</string>
+    <string name="history_last_days">Last 30 Days</string>
+    <string name="history_sparkle">*</string>
+    <string name="profile_edit_mark">/</string>
+    <string name="profile_plan_icon">*</string>
+    <string name="profile_current_plan">Current Plan</string>
+    <string name="profile_ai_pro">AI Pro Member</string>
+    <string name="profile_chevron">›</string>
+    <string name="profile_icon_person">o</string>
+    <string name="profile_icon_bank">B</string>
+    <string name="profile_icon_security">S</string>
+    <string name="profile_icon_notifications">N</string>
+    <string name="profile_personal_info">Personal Information</string>
+    <string name="profile_bank_connections">Bank Connections</string>
+    <string name="profile_security_privacy">Security &amp; Privacy</string>
+    <string name="profile_notifications">Notifications</string>
+    <string name="profile_logout">Logout</string>
+    <string name="add_title">What did you spend on?</string>
+    <string name="add_subtitle">Describe your expense naturally and Smart Expense AI will extract the amount and category.</string>
+    <string name="add_category_label">Category</string>
+    <string name="add_chat_hint">e.g., Spent 15k on pizza with friends</string>
+    <string name="add_send_symbol">^</string>
+    <string name="add_example_title">Try examples</string>
+    <string name="add_example_one">Spent 25,000 on lunch at Blue Bottle</string>
+    <string name="add_example_two">Paid 80,000 for electricity bill</string>
 </resources>

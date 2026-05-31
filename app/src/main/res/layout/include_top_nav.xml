@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/appTopNav"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:background="#F7F8FF"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="14dp">
+
+    <ImageView
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:contentDescription="@string/app_name"
+        android:scaleType="fitCenter"
+        android:src="@drawable/expense_tracker_logo" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:text="@string/title_smart_expense_ai"
+        android:textColor="#C4003A"
+        android:textSize="21sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/topMenuButton"
+        android:layout_width="32dp"
+        android:layout_height="40dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:text="..."
+        android:textColor="#4A3340"
+        android:textSize="18sp" />
+</LinearLayout>

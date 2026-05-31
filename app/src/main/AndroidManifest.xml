@@ -34,6 +34,26 @@
             android:theme="@style/Theme.SmartExpense" />
 
         <activity
+            android:name="com.example.smartexpense.DashboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartExpense" />
+
+        <activity
+            android:name="com.example.smartexpense.InsightsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartExpense" />
+
+        <activity
+            android:name="com.example.smartexpense.LoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartExpense" />
+
+        <activity
+            android:name="com.example.smartexpense.SignupActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartExpense" />
+
+        <activity
             android:name="com.example.smartexpense.HistoryActivity"
             android:exported="false"
             android:theme="@style/Theme.SmartExpense" />

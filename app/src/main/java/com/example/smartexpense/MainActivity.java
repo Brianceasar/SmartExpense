@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -39,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText inputText;
     private Spinner spinnerCategory;
-    private Button btnSubmit;
+    private ImageButton btnSubmit;
     private BottomNavigationView bottomNavigation;
     private String selectedCategory = "";
 
@@ -51,12 +52,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (!AuthManager.isSignedIn(this)) {
+            openLogin();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
+        TopMenu.attach(this);
 
         // View Mapping
         inputText = (EditText) findViewById(R.id.inputText);
         spinnerCategory = (Spinner) findViewById(R.id.spinnerCategory);
-        btnSubmit = (Button) findViewById(R.id.btnSubmit);
+        btnSubmit = (ImageButton) findViewById(R.id.btnSubmit);
         bottomNavigation = (BottomNavigationView) findViewById(R.id.bottomNavigation);
 
         // Spinner Setup
@@ -96,16 +104,26 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Bottom Navigation Listener
-        bottomNavigation.setSelectedItemId(R.id.nav_home);
+        bottomNavigation.setSelectedItemId(R.id.nav_add);
         bottomNavigation.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.nav_home) {
+                    Intent dashboardIntent = new Intent(MainActivity.this, DashboardActivity.class);
+                    startActivity(dashboardIntent);
+                    finish();
+                    return true;
+                } else if (itemId == R.id.nav_add) {
                     return true;
                 } else if (itemId == R.id.nav_history) {
                     Intent historyIntent = new Intent(MainActivity.this, HistoryActivity.class);
                     startActivity(historyIntent);
+                    finish();
+                    return true;
+                } else if (itemId == R.id.nav_insights) {
+                    Intent insightsIntent = new Intent(MainActivity.this, InsightsActivity.class);
+                    startActivity(insightsIntent);
                     finish();
                     return true;
                 } else if (itemId == R.id.nav_profile) {
@@ -117,6 +135,13 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+    }
+
+    private void openLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override

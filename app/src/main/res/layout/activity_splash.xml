@@ -4,14 +4,32 @@
     android:layout_height="match_parent"
     android:background="#7BF8C6">
 
-    <TextView
-        android:id="@+id/splashTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/splashContent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="@string/title_smart_expense_ai"
-        android:textColor="#1E293B"
-        android:textSize="32sp"
-        android:textStyle="bold" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <ImageView
+            android:id="@+id/splashLogo"
+            android:layout_width="128dp"
+            android:layout_height="128dp"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@drawable/expense_tracker_logo" />
+
+        <TextView
+            android:id="@+id/splashTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/title_smart_expense_ai"
+            android:textColor="#1E293B"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </RelativeLayout>
