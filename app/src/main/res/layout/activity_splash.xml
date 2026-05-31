@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#7BF8C6">
+    android:background="#121212">
 
     <LinearLayout
         android:id="@+id/splashContent"
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:text="@string/title_smart_expense_ai"
-            android:textColor="#1E293B"
+            android:textColor="#FFFFFF"
             android:textSize="32sp"
             android:textStyle="bold" />
     </LinearLayout>

@@ -30,7 +30,7 @@ final class TopMenu {
                     public boolean onMenuItemClick(MenuItem item) {
                         String title = item.getTitle().toString();
                         if ("Settings".equals(title)) {
-                            Toast.makeText(activity, "Settings coming soon", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, "Settings will be available soon.", Toast.LENGTH_SHORT).show();
                             return true;
                         }
 

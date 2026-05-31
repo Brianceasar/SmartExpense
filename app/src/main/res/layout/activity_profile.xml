@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F7F8FF">
+    android:background="#121212">
 
     <include
         android:id="@+id/appTopNav"
@@ -38,7 +38,7 @@
                     android:layout_gravity="center"
                     android:background="@drawable/profile_avatar_background"
                     android:gravity="center"
-                    android:textColor="#00836C"
+                    android:textColor="#FFFFFF"
                     android:textSize="28sp"
                     android:textStyle="bold" />
 
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:textColor="#111C2D"
+                android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -105,7 +105,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/profile_current_plan"
                         android:textAllCaps="true"
-                        android:textColor="#00836C"
+                        android:textColor="#FFFFFF"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
@@ -113,7 +113,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/profile_ai_pro"
-                        android:textColor="#00836C"
+                        android:textColor="#FFFFFF"
                         android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -123,7 +123,7 @@
                     android:layout_height="42dp"
                     android:gravity="center"
                     android:text="@string/profile_chevron"
-                    android:textColor="#00836C"
+                    android:textColor="#FFFFFF"
                     android:textSize="24sp" />
             </LinearLayout>
 
@@ -153,7 +153,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/profile_name_label"
                         android:textAllCaps="true"
-                        android:textColor="#5C3F40"
+                        android:textColor="#888888"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
@@ -162,7 +162,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:textColor="#111C2D"
+                        android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -172,7 +172,7 @@
                         android:layout_marginTop="10dp"
                         android:text="@string/profile_email_label"
                         android:textAllCaps="true"
-                        android:textColor="#5C3F40"
+                        android:textColor="#888888"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
@@ -181,7 +181,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:textColor="#111C2D"
+                        android:textColor="#FFFFFF"
                         android:textSize="14sp" />
                 </LinearLayout>
 

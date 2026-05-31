@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F7F8FF">
+    android:background="#121212">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -35,7 +35,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/dashboard_total_label"
                     android:textAllCaps="true"
-                    android:textColor="#5C6472"
+                    android:textColor="#FFFFFF"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
@@ -44,7 +44,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textColor="#50607A"
+                    android:textColor="#FFFFFF"
                     android:textSize="30sp"
                     android:textStyle="bold" />
 
@@ -70,14 +70,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#5C6472"
+                        android:textColor="#888888"
                         android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/budgetUsedText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#00836C"
+                        android:textColor="#D31329"
                         android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -95,7 +95,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/dashboard_spending_overview"
-                    android:textColor="#111C2D"
+                    android:textColor="#FFFFFF"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/dashboard_last_days"
-                    android:textColor="#5C6472"
+                    android:textColor="#888888"
                     android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -122,10 +122,10 @@
                     android:layout_height="44dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#48D8A8"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="MON"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
 
                 <TextView
@@ -133,10 +133,10 @@
                     android:layout_height="62dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#5DE0B6"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="TUE"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
 
                 <TextView
@@ -144,10 +144,10 @@
                     android:layout_height="112dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#84F3CE"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="WED"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
 
                 <TextView
@@ -155,10 +155,10 @@
                     android:layout_height="124dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#70E8BE"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="THU"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
 
                 <TextView
@@ -166,10 +166,10 @@
                     android:layout_height="70dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#4FD4A7"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="FRI"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
 
                 <TextView
@@ -177,10 +177,10 @@
                     android:layout_height="56dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#51DCAA"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="SAT"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
 
                 <TextView
@@ -188,10 +188,10 @@
                     android:layout_height="118dp"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
-                    android:background="#8DF5D2"
+                    android:background="#D31329"
                     android:gravity="bottom|center_horizontal"
                     android:text="SUN"
-                    android:textColor="#D8E3FB"
+                    android:textColor="#888888"
                     android:textSize="8sp" />
             </LinearLayout>
 
@@ -207,7 +207,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/dashboard_recent_activity"
-                    android:textColor="#111C2D"
+                    android:textColor="#FFFFFF"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
@@ -216,7 +216,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/dashboard_view_all"
-                    android:textColor="#B80035"
+                    android:textColor="#D31329"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>

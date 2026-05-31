@@ -167,7 +167,7 @@ public class HistoryActivity extends AppCompatActivity {
 
     private void styleChip(TextView chip, boolean selected) {
         chip.setBackgroundResource(selected ? R.drawable.history_chip_selected : R.drawable.history_chip);
-        chip.setTextColor(selected ? 0xFFFFFFFF : 0xFF50607A);
+        chip.setTextColor(selected ? 0xFFFFFFFF : 0xFF888888);
     }
 
     private void renderHistory() {
@@ -189,7 +189,7 @@ public class HistoryActivity extends AppCompatActivity {
         if (rendered == 0) {
             TextView emptyText = new TextView(this);
             emptyText.setText(allRecords.isEmpty() ? R.string.empty_history : R.string.empty_filtered_history);
-            emptyText.setTextColor(0xFF5C6472);
+            emptyText.setTextColor(0xFF888888);
             emptyText.setTextSize(15);
             emptyText.setGravity(Gravity.CENTER);
             emptyText.setPadding(0, dp(24), 0, dp(24));
@@ -224,7 +224,7 @@ public class HistoryActivity extends AppCompatActivity {
         TextView icon = new TextView(this);
         icon.setGravity(Gravity.CENTER);
         icon.setText(categoryIcon(record));
-        icon.setTextColor(0xFFC4003A);
+        icon.setTextColor(0xFFD31329);
         icon.setTextSize(16);
         icon.setTypeface(icon.getTypeface(), Typeface.BOLD);
         icon.setBackgroundResource(R.drawable.history_icon_circle);
@@ -237,7 +237,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         TextView title = new TextView(this);
         title.setText(extractTitle(record));
-        title.setTextColor(0xFF111C2D);
+        title.setTextColor(0xFFFFFFFF);
         title.setTextSize(14);
         title.setTypeface(title.getTypeface(), Typeface.BOLD);
         details.addView(title);
@@ -256,7 +256,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         TextView amount = new TextView(this);
         amount.setText(String.format(Locale.getDefault(), "-%,d", parseAmount(record)));
-        amount.setTextColor(0xFFC4003A);
+        amount.setTextColor(0xFFD31329);
         amount.setTextSize(14);
         amount.setTypeface(amount.getTypeface(), Typeface.BOLD);
         amount.setGravity(Gravity.RIGHT);
@@ -264,7 +264,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         TextView status = new TextView(this);
         status.setText(index % 4 == 2 ? "PROCESSING" : "AI VERIFIED");
-        status.setTextColor(index % 4 == 2 ? 0xFF7B6812 : 0xFF00836C);
+        status.setTextColor(index % 4 == 2 ? 0xFF888888 : 0xFFD31329);
         status.setTextSize(9);
         status.setTypeface(status.getTypeface(), Typeface.BOLD);
         status.setGravity(Gravity.RIGHT);

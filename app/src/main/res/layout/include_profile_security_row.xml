@@ -10,7 +10,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:text="@string/profile_icon_security"
-        android:textColor="#00836C"
+        android:textColor="#FFFFFF"
         android:textSize="17sp" />
 
     <TextView
@@ -19,7 +19,7 @@
         android:layout_marginStart="12dp"
         android:layout_weight="1"
         android:text="@string/profile_security_privacy"
-        android:textColor="#111C2D"
+        android:textColor="#FFFFFF"
         android:textSize="15sp" />
 
     <TextView

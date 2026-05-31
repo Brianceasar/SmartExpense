@@ -59,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
         forgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(LoginActivity.this, "Create a new account to reset local access", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Please sign up again if you need fresh local access.", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -86,17 +86,17 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         if (!AuthManager.hasAccount(this)) {
-            Toast.makeText(this, "No account found. Please sign up first.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No local account found. Please sign up first.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (AuthManager.login(this, email, password)) {
             if (checkboxRemember.isChecked()) {
-                Toast.makeText(this, "Signed in for 30 days", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Welcome back. Your session is active.", Toast.LENGTH_SHORT).show();
             }
             openMain();
         } else {
-            Toast.makeText(this, "Email or password is incorrect", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Email or password does not match our local records.", Toast.LENGTH_SHORT).show();
         }
     }
 

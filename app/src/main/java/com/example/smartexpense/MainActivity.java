@@ -9,7 +9,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
@@ -70,8 +69,8 @@ public class MainActivity extends AppCompatActivity {
         // Spinner Setup
         final String[] categories = {"Auto Category", "Food", "Transport", "Shopping", "Bills"};
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, categories);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                R.layout.spinner_item, categories);
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spinnerCategory.setAdapter(adapter);
 
         spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -90,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Button Click Listener
+        // Check if the user forgot to type anything before calling the AI.
         btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!text.isEmpty()) {
                     analyzeExpense(text);
                 } else {
-                    Toast.makeText(MainActivity.this, "Please enter an expense", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Please enter your Matumizi description first!", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -154,10 +153,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_settings) {
-            Toast.makeText(this, "Settings clicked", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Settings will be available soon.", Toast.LENGTH_SHORT).show();
             return true;
         } else if (itemId == R.id.action_about) {
-            Toast.makeText(this, "About clicked", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Smart Expense AI helps you log Matumizi in TZS.", Toast.LENGTH_SHORT).show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -166,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
     private void analyzeExpense(final String text) {
         final String categoryOverride = selectedCategory;
         btnSubmit.setEnabled(false);
-        Toast.makeText(this, "AI analyzing expense...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Logging your Matumizi with AI...", Toast.LENGTH_SHORT).show();
 
         new Thread(new Runnable() {
             @Override
@@ -205,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                         inputText.setText("");
                         spinnerCategory.setSelection(0);
 
-                        String message = finalSource + " saved: "
+                        String message = finalSource + " logged: "
                                 + finalResult.amount + " TZS, " + finalResult.category;
                         if (!finalSource.equals("AI") && !finalErrorMessage.isEmpty()) {
                             message = message + " (" + finalErrorMessage + ")";

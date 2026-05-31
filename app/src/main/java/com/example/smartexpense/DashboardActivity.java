@@ -81,8 +81,8 @@ public class DashboardActivity extends AppCompatActivity {
 
         if (recentActivityList.getChildCount() == 0) {
             TextView emptyText = new TextView(this);
-            emptyText.setText("No recent expenses yet");
-            emptyText.setTextColor(0xFF5C6472);
+            emptyText.setText("No recent Matumizi yet");
+            emptyText.setTextColor(0xFF888888);
             emptyText.setTextSize(14);
             emptyText.setPadding(0, 16, 0, 16);
             recentActivityList.addView(emptyText);
@@ -92,7 +92,7 @@ public class DashboardActivity extends AppCompatActivity {
         int usedPercent = Math.min(Math.round((total * 100f) / MONTHLY_BUDGET), 100);
 
         totalSpentText.setText(String.format(Locale.getDefault(), "%,d TZS", total));
-        remainingBudgetText.setText(String.format(Locale.getDefault(), "Remaining Budget: %,d TZS", remaining));
+        remainingBudgetText.setText(String.format(Locale.getDefault(), "Remaining budget: %,d TZS", remaining));
         budgetUsedText.setText(String.format(Locale.getDefault(), "%d%% USED", usedPercent));
         budgetProgress.setProgress(usedPercent);
     }
@@ -125,20 +125,20 @@ public class DashboardActivity extends AppCompatActivity {
 
         TextView title = new TextView(this);
         title.setText(extractTitle(record));
-        title.setTextColor(0xFF111C2D);
+        title.setTextColor(0xFFFFFFFF);
         title.setTextSize(14);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         details.addView(title);
 
         TextView subtitle = new TextView(this);
         subtitle.setText(extractSubtitle(record));
-        subtitle.setTextColor(0xFF5C6472);
+        subtitle.setTextColor(0xFF888888);
         subtitle.setTextSize(11);
         details.addView(subtitle);
 
         TextView amount = new TextView(this);
         amount.setText(String.format(Locale.getDefault(), "-%,d", parseAmount(record)));
-        amount.setTextColor(0xFF111C2D);
+        amount.setTextColor(0xFFFFFFFF);
         amount.setGravity(android.view.Gravity.RIGHT);
         amount.setTextSize(14);
         amount.setTypeface(amount.getTypeface(), android.graphics.Typeface.BOLD);
@@ -183,7 +183,7 @@ public class DashboardActivity extends AppCompatActivity {
     private String extractSubtitle(String record) {
         String[] parts = record.split("\\|");
         if (parts.length >= 3) {
-            return parts[0].trim() + " • " + parts[2].trim();
+            return parts[0].trim() + " - " + parts[2].trim();
         }
         return "Verified by AI";
     }

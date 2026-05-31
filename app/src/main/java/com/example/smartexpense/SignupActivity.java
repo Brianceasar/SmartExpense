@@ -86,7 +86,7 @@ public class SignupActivity extends AppCompatActivity {
         }
 
         if (!checkboxTerms.isChecked()) {
-            Toast.makeText(this, "Accept the terms to continue", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please accept the terms to continue.", Toast.LENGTH_SHORT).show();
             return;
         }
 
