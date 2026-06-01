@@ -4,6 +4,7 @@ appcompat = "1.7.0"
 kotlin = "2.0.0"
 core = "1.13.1"
 junit = "4.13.2"
+json = "20250517"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 material = "1.12.0"
@@ -13,6 +14,7 @@ generativeai = "0.9.0"
 androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+json = { group = "org.json", name = "json", version.ref = "json" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
