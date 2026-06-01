@@ -27,7 +27,7 @@ final class AuthManager {
                 .putString(KEY_NAME, name)
                 .putString(KEY_EMAIL, email)
                 .putString(KEY_PASSWORD, password)
-                .putBoolean(KEY_SIGNED_IN, true)
+                .putBoolean(KEY_SIGNED_IN, false)
                 .apply();
     }
 

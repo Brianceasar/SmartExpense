@@ -39,41 +39,14 @@
                 android:textColor="#888888"
                 android:textSize="14sp" />
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/insightsList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginEnd="20dp"
-                android:background="@drawable/dashboard_card_background"
-                android:padding="18dp"
-                android:text="@string/insight_one"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="14dp"
-                android:layout_marginEnd="20dp"
-                android:background="@drawable/dashboard_card_background"
-                android:padding="18dp"
-                android:text="@string/insight_two"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="14dp"
-                android:layout_marginEnd="20dp"
-                android:background="@drawable/dashboard_card_background"
-                android:padding="18dp"
-                android:text="@string/insight_three"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp" />
+                android:orientation="vertical" />
         </LinearLayout>
     </ScrollView>
 

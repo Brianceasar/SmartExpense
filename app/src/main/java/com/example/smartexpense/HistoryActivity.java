@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,15 +21,20 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class HistoryActivity extends AppCompatActivity {
 
     private BottomNavigationView nav;
     private LinearLayout historyList;
+    private LinearLayout monthlySpendList;
+    private LinearLayout filterChipsContainer;
+    private TextView periodLabel;
     private TextView monthlyTotal;
     private EditText historySearch;
-    private TextView chipAll, chipFood, chipShopping, chipTransport;
+    private ArrayList<TextView> filterChips = new ArrayList<TextView>();
     private ArrayList<String> allRecords = new ArrayList<String>();
     private String selectedCategory = "All";
 
@@ -49,12 +55,11 @@ public class HistoryActivity extends AppCompatActivity {
 
         nav = (BottomNavigationView) findViewById(R.id.bottomNavigation);
         historyList = (LinearLayout) findViewById(R.id.historyList);
+        monthlySpendList = (LinearLayout) findViewById(R.id.monthlySpendList);
+        filterChipsContainer = (LinearLayout) findViewById(R.id.historyFilterChips);
+        periodLabel = (TextView) findViewById(R.id.historyPeriodLabel);
         monthlyTotal = (TextView) findViewById(R.id.historyMonthlyTotal);
         historySearch = (EditText) findViewById(R.id.historySearch);
-        chipAll = (TextView) findViewById(R.id.chipAll);
-        chipFood = (TextView) findViewById(R.id.chipFood);
-        chipShopping = (TextView) findViewById(R.id.chipShopping);
-        chipTransport = (TextView) findViewById(R.id.chipTransport);
 
         loadHistory();
         setupFilters();
@@ -123,33 +128,7 @@ public class HistoryActivity extends AppCompatActivity {
             }
         });
 
-        chipAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectCategory("All");
-            }
-        });
-
-        chipFood.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectCategory("Food");
-            }
-        });
-
-        chipShopping.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectCategory("Shopping");
-            }
-        });
-
-        chipTransport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectCategory("Transport");
-            }
-        });
+        renderFilterChips();
     }
 
     private void selectCategory(String category) {
@@ -159,10 +138,9 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
     private void updateChipStyles() {
-        styleChip(chipAll, selectedCategory.equals("All"));
-        styleChip(chipFood, selectedCategory.equals("Food"));
-        styleChip(chipShopping, selectedCategory.equals("Shopping"));
-        styleChip(chipTransport, selectedCategory.equals("Transport"));
+        for (TextView chip : filterChips) {
+            styleChip(chip, selectedCategory.equals(chip.getText().toString()));
+        }
     }
 
     private void styleChip(TextView chip, boolean selected) {
@@ -170,16 +148,54 @@ public class HistoryActivity extends AppCompatActivity {
         chip.setTextColor(selected ? 0xFFFFFFFF : 0xFF888888);
     }
 
+    private void renderFilterChips() {
+        filterChipsContainer.removeAllViews();
+        filterChips.clear();
+        addFilterChip("All");
+
+        ArrayList<String> categories = CategoryManager.getCategories(this);
+        for (String category : categories) {
+            addFilterChip(category);
+        }
+        updateChipStyles();
+    }
+
+    private void addFilterChip(final String category) {
+        TextView chip = new TextView(this);
+        chip.setText(category);
+        chip.setGravity(Gravity.CENTER);
+        chip.setTextSize(13);
+        chip.setTypeface(chip.getTypeface(), Typeface.BOLD);
+        chip.setPadding(dp(18), 0, dp(18), 0);
+        chip.setMinHeight(dp(38));
+        chip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectCategory(category);
+            }
+        });
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dp(38)
+        );
+        if (!filterChips.isEmpty()) {
+            params.setMargins(dp(10), 0, 0, 0);
+        }
+        filterChipsContainer.addView(chip, params);
+        filterChips.add(chip);
+    }
+
     private void renderHistory() {
-        int total = 0;
+        int total = BudgetManager.getCurrentPeriodSpending(this);
+        int budget = BudgetManager.getBudgetAmount(this);
+        int remaining = Math.max(budget - total, 0);
         int rendered = 0;
         String query = historySearch == null ? "" : historySearch.getText().toString().trim().toLowerCase(Locale.ROOT);
 
         historyList.removeAllViews();
 
         for (String cleanRecord : allRecords) {
-            total += parseAmount(cleanRecord);
-
             if (matchesFilters(cleanRecord, query) && rendered < 12) {
                 historyList.addView(createTransactionRow(cleanRecord, rendered));
                 rendered++;
@@ -196,11 +212,131 @@ public class HistoryActivity extends AppCompatActivity {
             historyList.addView(emptyText);
         }
 
+        periodLabel.setText(BudgetManager.getPeriodSpendingLabel(this).toUpperCase(Locale.getDefault()));
         monthlyTotal.setText(String.format(Locale.getDefault(), "%,d TZS", total));
+        TextView comparison = (TextView) findViewById(R.id.historyMonthlyComparison);
+        comparison.setText(String.format(
+                Locale.getDefault(),
+                "Budget: %,d TZS | Remaining: %,d TZS",
+                budget,
+                remaining
+        ));
+        renderMonthlySpending();
+    }
+
+    private void renderMonthlySpending() {
+        int[] totals = new int[6];
+        int max = 0;
+
+        for (String record : allRecords) {
+            Date date = BudgetManager.parseRecordDate(record);
+            int monthIndex = getMonthIndex(date);
+            if (monthIndex >= 0 && monthIndex < totals.length) {
+                totals[monthIndex] += BudgetManager.parseAmount(record);
+                max = Math.max(max, totals[monthIndex]);
+            }
+        }
+
+        monthlySpendList.removeAllViews();
+        Calendar month = Calendar.getInstance();
+        for (int i = 0; i < totals.length; i++) {
+            monthlySpendList.addView(createMonthlySpendRow(month, totals[i], max, i == 0));
+            month.add(Calendar.MONTH, -1);
+        }
+    }
+
+    private int getMonthIndex(Date date) {
+        if (date == null) {
+            return -1;
+        }
+
+        Calendar current = Calendar.getInstance();
+        Calendar record = Calendar.getInstance();
+        record.setTime(date);
+        return (current.get(Calendar.YEAR) - record.get(Calendar.YEAR)) * 12
+                + current.get(Calendar.MONTH) - record.get(Calendar.MONTH);
+    }
+
+    private View createMonthlySpendRow(Calendar month, int total, int max, boolean selected) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        rowParams.setMargins(0, 0, 0, dp(18));
+        row.setLayoutParams(rowParams);
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(top);
+
+        TextView title = new TextView(this);
+        title.setText(getMonthLabel(month));
+        title.setTextColor(0xFFA0AAB8);
+        title.setTextSize(14);
+        title.setTypeface(title.getTypeface(), Typeface.BOLD);
+        top.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView marker = new TextView(this);
+        marker.setText("o");
+        marker.setGravity(Gravity.CENTER);
+        marker.setTextColor(selected ? 0xFF4CAF50 : 0xFF888888);
+        marker.setTextSize(20);
+        marker.setTypeface(marker.getTypeface(), Typeface.BOLD);
+        top.addView(marker, new LinearLayout.LayoutParams(dp(26), dp(26)));
+
+        ProgressBar progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progress.setMax(100);
+        progress.setProgress(max == 0 ? 0 : Math.round((total * 100f) / max));
+        progress.setProgressDrawable(getResources().getDrawable(R.drawable.history_month_progress));
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(10)
+        );
+        progressParams.setMargins(0, dp(10), 0, 0);
+        row.addView(progress, progressParams);
+
+        LinearLayout bottom = new LinearLayout(this);
+        bottom.setOrientation(LinearLayout.HORIZONTAL);
+        bottom.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams bottomParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        bottomParams.setMargins(0, dp(8), 0, 0);
+        row.addView(bottom, bottomParams);
+
+        TextView label = new TextView(this);
+        label.setText("Total spend");
+        label.setTextColor(0xFFA0AAB8);
+        label.setTextSize(12);
+        label.setTypeface(label.getTypeface(), Typeface.BOLD);
+        bottom.addView(label, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView amount = new TextView(this);
+        amount.setText(String.format(Locale.getDefault(), "TZS %,d", total));
+        amount.setTextColor(0xFF4CAF50);
+        amount.setTextSize(12);
+        amount.setTypeface(amount.getTypeface(), Typeface.BOLD);
+        bottom.addView(amount);
+
+        return row;
+    }
+
+    private String getMonthLabel(Calendar month) {
+        String monthName = month.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault());
+        if (monthName == null) {
+            monthName = "";
+        }
+        return monthName + "'s spend";
     }
 
     private boolean matchesFilters(String record, String query) {
-        if (!selectedCategory.equals("All") && !record.toLowerCase(Locale.ROOT).contains(selectedCategory.toLowerCase(Locale.ROOT))) {
+        String recordCategory = CategoryManager.getRecordCategory(record);
+        if (!selectedCategory.equals("All") && !recordCategory.equalsIgnoreCase(selectedCategory)) {
             return false;
         }
 
@@ -244,7 +380,7 @@ public class HistoryActivity extends AppCompatActivity {
 
         TextView subtitle = new TextView(this);
         subtitle.setText(extractSubtitle(record));
-        subtitle.setTextColor(0xFF4A3340);
+        subtitle.setTextColor(0xFFA0AAB8);
         subtitle.setTextSize(10);
         subtitle.setTypeface(subtitle.getTypeface(), Typeface.BOLD);
         details.addView(subtitle);
@@ -255,7 +391,7 @@ public class HistoryActivity extends AppCompatActivity {
         row.addView(right, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView amount = new TextView(this);
-        amount.setText(String.format(Locale.getDefault(), "-%,d", parseAmount(record)));
+        amount.setText(String.format(Locale.getDefault(), "-%,d", BudgetManager.parseAmount(record)));
         amount.setTextColor(0xFFD31329);
         amount.setTextSize(14);
         amount.setTypeface(amount.getTypeface(), Typeface.BOLD);
@@ -274,30 +410,26 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
     private String categoryIcon(String record) {
-        if (record.contains("Shopping")) {
+        String category = CategoryManager.getRecordCategory(record);
+        if (category.equals("Shopping")) {
             return "$";
         }
-        if (record.contains("Transport")) {
+        if (category.equals("Transport")) {
             return "T";
         }
-        if (record.contains("Bills")) {
+        if (category.equals("Bills")) {
             return "B";
         }
-        return "F";
-    }
-
-    private int parseAmount(String record) {
-        String[] parts = record.split("\\|");
-        if (parts.length < 2) {
-            return 0;
+        if (category.equals("Investments")) {
+            return "I";
         }
-
-        String amount = parts[1].replace("TZS", "").replace(",", "").trim();
-        try {
-            return Integer.parseInt(amount);
-        } catch (NumberFormatException e) {
-            return 0;
+        if (category.equals("Loans")) {
+            return "L";
         }
+        if (category.equals("Food")) {
+            return "F";
+        }
+        return category.isEmpty() ? "?" : category.substring(0, 1).toUpperCase(Locale.ROOT);
     }
 
     private String extractTitle(String record) {

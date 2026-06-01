@@ -91,7 +91,8 @@ public class SignupActivity extends AppCompatActivity {
         }
 
         AuthManager.createAccount(this, name, email, password);
-        openMain();
+        Toast.makeText(this, "Account created. Please log in.", Toast.LENGTH_SHORT).show();
+        openLogin();
     }
 
     private boolean isStrongPassword(String password) {
@@ -115,6 +116,13 @@ public class SignupActivity extends AppCompatActivity {
 
     private void openMain() {
         Intent intent = new Intent(this, DashboardActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void openLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

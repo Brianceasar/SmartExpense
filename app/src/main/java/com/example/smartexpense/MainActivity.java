@@ -23,6 +23,7 @@ import com.google.android.material.navigation.NavigationBarView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_HISTORY = "history";
     private static final String TAG = "SmartExpenseAI";
     private static final String GEMINI_MODEL = "gemini-2.5-flash";
+    private static final int HTTP_TOO_MANY_REQUESTS = 429;
+    private static final int HTTP_UNAVAILABLE = 503;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +70,8 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigation = (BottomNavigationView) findViewById(R.id.bottomNavigation);
 
         // Spinner Setup
-        final String[] categories = {"Auto Category", "Food", "Transport", "Shopping", "Bills"};
+        final ArrayList<String> categories = CategoryManager.getCategories(this);
+        categories.add(0, "Auto Category");
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 R.layout.spinner_item, categories);
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
@@ -77,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position > 0) {
-                    selectedCategory = categories[position];
+                    selectedCategory = categories.get(position);
                 } else {
                     selectedCategory = "";
                 }
@@ -183,13 +187,13 @@ public class MainActivity extends AppCompatActivity {
                         source = "AI";
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "Gemini failed, using local parser", e);
+                    Log.w(TAG, "Gemini unavailable, using local parser: " + e.getMessage());
                     result = fallbackExpense(text);
                     errorMessage = e.getMessage();
                 }
 
-                if (!categoryOverride.isEmpty()) {
-                    result.category = categoryOverride;
+        if (!categoryOverride.isEmpty()) {
+                    result.category = CategoryManager.sanitizeCategory(categoryOverride);
                 }
 
                 final ExpenseResult finalResult = result;
@@ -199,6 +203,8 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        finalResult.category = CategoryManager.sanitizeCategory(finalResult.category);
+                        CategoryManager.saveCategory(MainActivity.this, finalResult.category);
                         saveExpense(text, finalResult.amount, finalResult.category);
                         btnSubmit.setEnabled(true);
                         inputText.setText("");
@@ -207,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                         String message = finalSource + " logged: "
                                 + finalResult.amount + " TZS, " + finalResult.category;
                         if (!finalSource.equals("AI") && !finalErrorMessage.isEmpty()) {
-                            message = message + " (" + finalErrorMessage + ")";
+                            message = message + " (AI unavailable)";
                         }
 
                         Toast.makeText(
@@ -239,12 +245,13 @@ public class MainActivity extends AppCompatActivity {
         JSONObject part = new JSONObject();
         JSONObject generationConfig = new JSONObject();
 
-        String prompt = "Extract this expense into JSON only. "
-                + "Use keys amount and category. "
-                + "Category must be Food, Transport, Shopping, Bills, or General. "
-                + "Use Food for meals, drinks, beer, restaurants, snacks, groceries, or eating out. "
-                + "Return example: {\"amount\":\"15000\",\"category\":\"Food\"}. "
-                + "Expense: " + text;
+        String prompt = "Return only one JSON object: {\"amount\":\"\",\"category\":\"\"}. "
+                + "No markdown, no explanation. "
+                + "Amount is money spent, not item counts. "
+                + "Prefer: " + joinCategories(CategoryManager.getCategories(this)) + ". "
+                + "If none fit, create a short Title Case category. "
+                + "Examples: shares/DSE/stocks=Investments, loan repayment=Loans. "
+                + "Text: " + truncate(text, 180);
 
         part.put("text", prompt);
         parts.put(part);
@@ -252,6 +259,8 @@ public class MainActivity extends AppCompatActivity {
         contents.put(content);
         requestBody.put("contents", contents);
         generationConfig.put("responseMimeType", "application/json");
+        generationConfig.put("maxOutputTokens", 80);
+        generationConfig.put("temperature", 0);
         requestBody.put("generationConfig", generationConfig);
 
         OutputStream outputStream = connection.getOutputStream();
@@ -266,8 +275,10 @@ public class MainActivity extends AppCompatActivity {
         connection.disconnect();
 
         if (responseCode < 200 || responseCode >= 300) {
-            throw new Exception("Gemini HTTP " + responseCode + " for " + GEMINI_MODEL
-                    + ": " + truncate(response, 160));
+            if (responseCode == HTTP_TOO_MANY_REQUESTS || responseCode == HTTP_UNAVAILABLE) {
+                throw new Exception("AI service busy");
+            }
+            throw new Exception("AI request failed");
         }
 
         JSONObject json = new JSONObject(response);
@@ -279,12 +290,27 @@ public class MainActivity extends AppCompatActivity {
                 .getString("text")
                 .trim();
 
-        modelText = modelText.replace("```json", "").replace("```", "").trim();
+        modelText = extractJsonObject(modelText);
         JSONObject parsed = new JSONObject(modelText);
         return new ExpenseResult(
                 parsed.optString("amount", findAmount(text)).replace(",", ""),
-                parsed.optString("category", findCategory(text))
+                normalizeCategory(parsed.optString("category", findCategory(text)), text)
         );
+    }
+
+    private String extractJsonObject(String value) throws Exception {
+        String cleaned = value == null ? "" : value
+                .replace("```json", "")
+                .replace("```", "")
+                .trim();
+
+        int start = cleaned.indexOf("{");
+        int end = cleaned.lastIndexOf("}");
+        if (start >= 0 && end > start) {
+            return cleaned.substring(start, end + 1);
+        }
+
+        throw new Exception("Gemini returned non-JSON text: " + truncate(cleaned, 80));
     }
 
     private String readStream(InputStream inputStream) throws Exception {
@@ -323,12 +349,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String findAmount(String text) {
-        Pattern pattern = Pattern.compile("(\\d[\\d,]*)");
+        Pattern pattern = Pattern.compile("(\\d[\\d,]*(?:\\.\\d+)?)(\\s*)(million|millions|m|thousand|k)?", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(text);
-        if (matcher.find()) {
-            return matcher.group(1).replace(",", "");
+        long amount = -1;
+
+        while (matcher.find()) {
+            String numberText = matcher.group(1).replace(",", "");
+            String suffix = matcher.group(3) == null ? "" : matcher.group(3).toLowerCase(Locale.ROOT);
+
+            try {
+                double parsed = Double.parseDouble(numberText);
+                if (suffix.equals("million") || suffix.equals("millions") || suffix.equals("m")) {
+                    parsed *= 1000000;
+                } else if (suffix.equals("thousand") || suffix.equals("k")) {
+                    parsed *= 1000;
+                }
+                amount = Math.round(parsed);
+            } catch (NumberFormatException ignored) {
+            }
         }
+
+        if (amount >= 0) {
+            return String.valueOf(amount);
+        }
+
         return "0";
+    }
+
+    private String joinCategories(ArrayList<String> categories) {
+        StringBuilder builder = new StringBuilder();
+        int count = Math.min(categories.size(), 12);
+        for (int i = 0; i < count; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(categories.get(i));
+        }
+        return builder.toString();
     }
 
     private String findCategory(String text) {
@@ -353,12 +410,34 @@ public class MainActivity extends AppCompatActivity {
             return "Shopping";
         }
 
+        if (lowerText.contains("share") || lowerText.contains("shares")
+                || lowerText.contains("stock") || lowerText.contains("stocks")
+                || lowerText.contains("dse") || lowerText.contains("bond")
+                || lowerText.contains("treasury") || lowerText.contains("security")
+                || lowerText.contains("securities") || lowerText.contains("invest")) {
+            return "Investments";
+        }
+
+        if (lowerText.contains("loan") || lowerText.contains("borrow")
+                || lowerText.contains("debt") || lowerText.contains("repayment")) {
+            return "Loans";
+        }
+
         if (lowerText.contains("bill") || lowerText.contains("rent")
                 || lowerText.contains("water") || lowerText.contains("electric")) {
             return "Bills";
         }
 
         return "General";
+    }
+
+    private String normalizeCategory(String category, String text) {
+        String cleaned = CategoryManager.sanitizeCategory(category);
+        if (!cleaned.equals("General")) {
+            return cleaned;
+        }
+
+        return findCategory(text);
     }
 
     private void saveRecord(String record) {

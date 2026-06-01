@@ -5,13 +5,13 @@
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
-    <TextView
+    <ImageView
         android:layout_width="28dp"
         android:layout_height="match_parent"
+        android:contentDescription="@string/profile_security_privacy"
         android:gravity="center"
-        android:text="@string/profile_icon_security"
-        android:textColor="#FFFFFF"
-        android:textSize="17sp" />
+        android:padding="3dp"
+        android:src="@drawable/ic_profile_security" />
 
     <TextView
         android:layout_width="0dp"

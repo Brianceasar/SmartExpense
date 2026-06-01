@@ -8,13 +8,13 @@
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
-    <TextView
+    <ImageView
         android:layout_width="28dp"
         android:layout_height="match_parent"
+        android:contentDescription="@string/profile_personal_info"
         android:gravity="center"
-        android:text="@string/profile_icon_person"
-        android:textColor="#FFFFFF"
-        android:textSize="17sp" />
+        android:padding="3dp"
+        android:src="@drawable/ic_profile_person" />
 
     <TextView
         android:layout_width="0dp"

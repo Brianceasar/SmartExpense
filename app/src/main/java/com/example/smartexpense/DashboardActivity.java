@@ -15,20 +15,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Locale;
 
 public class DashboardActivity extends AppCompatActivity {
 
     private static final String PREFS_NAME = "expense_data";
     private static final String KEY_HISTORY = "history";
-    private static final int MONTHLY_BUDGET = 200000;
 
+    private TextView totalLabelText;
     private TextView totalSpentText;
     private TextView remainingBudgetText;
     private TextView budgetUsedText;
     private ProgressBar budgetProgress;
     private LinearLayout recentActivityList;
     private BottomNavigationView bottomNavigation;
+    private TextView[] chartBars;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,12 +45,22 @@ public class DashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_dashboard);
         TopMenu.attach(this);
 
+        totalLabelText = (TextView) findViewById(R.id.dashboardTotalLabel);
         totalSpentText = (TextView) findViewById(R.id.totalSpentText);
         remainingBudgetText = (TextView) findViewById(R.id.remainingBudgetText);
         budgetUsedText = (TextView) findViewById(R.id.budgetUsedText);
         budgetProgress = (ProgressBar) findViewById(R.id.budgetProgress);
         recentActivityList = (LinearLayout) findViewById(R.id.recentActivityList);
         bottomNavigation = (BottomNavigationView) findViewById(R.id.bottomNavigation);
+        chartBars = new TextView[]{
+                (TextView) findViewById(R.id.chartDay0),
+                (TextView) findViewById(R.id.chartDay1),
+                (TextView) findViewById(R.id.chartDay2),
+                (TextView) findViewById(R.id.chartDay3),
+                (TextView) findViewById(R.id.chartDay4),
+                (TextView) findViewById(R.id.chartDay5),
+                (TextView) findViewById(R.id.chartDay6)
+        };
 
         findViewById(R.id.viewAllHistory).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,7 +76,9 @@ public class DashboardActivity extends AppCompatActivity {
     private void loadDashboard() {
         String history = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_HISTORY, "");
         String[] lines = history.trim().isEmpty() ? new String[0] : history.split("\\n");
-        int total = 0;
+        int total = BudgetManager.getCurrentPeriodSpending(this);
+        int budget = BudgetManager.getBudgetAmount(this);
+        int[] dailyTotals = new int[7];
 
         recentActivityList.removeAllViews();
 
@@ -73,7 +88,8 @@ public class DashboardActivity extends AppCompatActivity {
                 continue;
             }
 
-            total += parseAmount(line);
+            int amount = BudgetManager.parseAmount(line);
+            addToDailyTotal(line, amount, dailyTotals);
             if (recentActivityList.getChildCount() < 3) {
                 recentActivityList.addView(createRecentRow(line));
             }
@@ -88,13 +104,69 @@ public class DashboardActivity extends AppCompatActivity {
             recentActivityList.addView(emptyText);
         }
 
-        int remaining = Math.max(MONTHLY_BUDGET - total, 0);
-        int usedPercent = Math.min(Math.round((total * 100f) / MONTHLY_BUDGET), 100);
+        int remaining = Math.max(budget - total, 0);
+        int usedPercent = budget <= 0 ? 0 : Math.min(Math.round((total * 100f) / budget), 100);
 
+        totalLabelText.setText(BudgetManager.getPeriodSpendingLabel(this));
         totalSpentText.setText(String.format(Locale.getDefault(), "%,d TZS", total));
         remainingBudgetText.setText(String.format(Locale.getDefault(), "Remaining budget: %,d TZS", remaining));
         budgetUsedText.setText(String.format(Locale.getDefault(), "%d%% USED", usedPercent));
         budgetProgress.setProgress(usedPercent);
+        updateSpendingOverview(dailyTotals);
+    }
+
+    private void addToDailyTotal(String record, int amount, int[] dailyTotals) {
+        java.util.Date recordDate = BudgetManager.parseRecordDate(record);
+        if (recordDate == null) {
+            return;
+        }
+
+        Calendar start = Calendar.getInstance();
+        start.set(Calendar.HOUR_OF_DAY, 0);
+        start.set(Calendar.MINUTE, 0);
+        start.set(Calendar.SECOND, 0);
+        start.set(Calendar.MILLISECOND, 0);
+        start.add(Calendar.DAY_OF_YEAR, -6);
+
+        Calendar recordDay = Calendar.getInstance();
+        recordDay.setTime(recordDate);
+        recordDay.set(Calendar.HOUR_OF_DAY, 0);
+        recordDay.set(Calendar.MINUTE, 0);
+        recordDay.set(Calendar.SECOND, 0);
+        recordDay.set(Calendar.MILLISECOND, 0);
+
+        long diffMillis = recordDay.getTimeInMillis() - start.getTimeInMillis();
+        int index = (int) (diffMillis / (24L * 60L * 60L * 1000L));
+        if (index >= 0 && index < dailyTotals.length) {
+            dailyTotals[index] += amount;
+        }
+    }
+
+    private void updateSpendingOverview(int[] dailyTotals) {
+        int max = 0;
+        for (int amount : dailyTotals) {
+            max = Math.max(max, amount);
+        }
+
+        Calendar labelDay = Calendar.getInstance();
+        labelDay.add(Calendar.DAY_OF_YEAR, -6);
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault());
+
+        for (int i = 0; i < chartBars.length; i++) {
+            TextView bar = chartBars[i];
+            int height = dailyTotals[i] == 0 || max == 0
+                    ? dp(28)
+                    : dp(28 + Math.round((dailyTotals[i] * 96f) / max));
+
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) bar.getLayoutParams();
+            params.height = height;
+            bar.setLayoutParams(params);
+            bar.setText(dayFormat.format(labelDay.getTime()).toUpperCase(Locale.getDefault()));
+            bar.setBackgroundColor(dailyTotals[i] == 0 ? 0xFF2A2A2A : 0xFFD31329);
+            bar.setTextColor(0xFFFFFFFF);
+
+            labelDay.add(Calendar.DAY_OF_YEAR, 1);
+        }
     }
 
     private View createRecentRow(String record) {
@@ -137,7 +209,7 @@ public class DashboardActivity extends AppCompatActivity {
         details.addView(subtitle);
 
         TextView amount = new TextView(this);
-        amount.setText(String.format(Locale.getDefault(), "-%,d", parseAmount(record)));
+        amount.setText(String.format(Locale.getDefault(), "-%,d", BudgetManager.parseAmount(record)));
         amount.setTextColor(0xFFFFFFFF);
         amount.setGravity(android.view.Gravity.RIGHT);
         amount.setTextSize(14);
@@ -148,27 +220,23 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private String categoryIcon(String record) {
-        if (record.contains("Shopping")) {
+        String category = CategoryManager.getRecordCategory(record);
+        if (category.equals("Shopping")) {
             return "$";
         }
-        if (record.contains("Transport")) {
+        if (category.equals("Transport")) {
             return "T";
         }
-        return "F";
-    }
-
-    private int parseAmount(String record) {
-        String[] parts = record.split("\\|");
-        if (parts.length < 2) {
-            return 0;
+        if (category.equals("Bills")) {
+            return "B";
         }
-
-        String amount = parts[1].replace("TZS", "").replace(",", "").trim();
-        try {
-            return Integer.parseInt(amount);
-        } catch (NumberFormatException e) {
-            return 0;
+        if (category.equals("Investments")) {
+            return "I";
         }
+        if (category.equals("Food")) {
+            return "F";
+        }
+        return category.isEmpty() ? "?" : category.substring(0, 1).toUpperCase(Locale.ROOT);
     }
 
     private String extractTitle(String record) {
