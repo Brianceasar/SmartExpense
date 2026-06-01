@@ -100,6 +100,7 @@ public class InsightsActivity extends AppCompatActivity {
         JSONArray parts = new JSONArray();
         JSONObject part = new JSONObject();
         JSONObject generationConfig = new JSONObject();
+        JSONObject thinkingConfig = new JSONObject();
 
         part.put("text", "Return only one JSON object: {\"insights\":[\"...\",\"...\",\"...\"]}. "
                 + "No markdown, no explanation. "
@@ -110,8 +111,10 @@ public class InsightsActivity extends AppCompatActivity {
         contents.put(content);
         requestBody.put("contents", contents);
         generationConfig.put("responseMimeType", "application/json");
-        generationConfig.put("maxOutputTokens", 180);
+        generationConfig.put("maxOutputTokens", 512);
         generationConfig.put("temperature", 0.3);
+        thinkingConfig.put("thinkingBudget", 0);
+        generationConfig.put("thinkingConfig", thinkingConfig);
         requestBody.put("generationConfig", generationConfig);
 
         OutputStream outputStream = connection.getOutputStream();

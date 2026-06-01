@@ -20,16 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -47,9 +38,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "expense_data";
     private static final String KEY_HISTORY = "history";
     private static final String TAG = "SmartExpenseAI";
-    private static final String GEMINI_MODEL = "gemini-2.5-flash";
-    private static final int HTTP_TOO_MANY_REQUESTS = 429;
-    private static final int HTTP_UNAVAILABLE = 503;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,7 +171,14 @@ public class MainActivity extends AppCompatActivity {
                         result = fallbackExpense(text);
                         errorMessage = "missing API key";
                     } else {
-                        result = askGemini(text);
+                        result = new GeminiExpenseClient().askExpense(
+                                BuildConfig.GEMINI_API_KEY,
+                                text,
+                                CategoryManager.getCategories(MainActivity.this),
+                                findAmount(text),
+                                findCategory(text)
+                        );
+                        result.category = normalizeCategory(result.category, text);
                         source = "AI";
                     }
                 } catch (Exception e) {
@@ -192,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                     errorMessage = e.getMessage();
                 }
 
-        if (!categoryOverride.isEmpty()) {
+                if (!categoryOverride.isEmpty()) {
                     result.category = CategoryManager.sanitizeCategory(categoryOverride);
                 }
 
@@ -225,117 +220,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }).start();
-    }
-
-    private ExpenseResult askGemini(String text) throws Exception {
-        URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/"
-                + GEMINI_MODEL + ":generateContent");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setConnectTimeout(15000);
-        connection.setReadTimeout(20000);
-        connection.setDoOutput(true);
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("X-goog-api-key", BuildConfig.GEMINI_API_KEY);
-
-        JSONObject requestBody = new JSONObject();
-        JSONArray contents = new JSONArray();
-        JSONObject content = new JSONObject();
-        JSONArray parts = new JSONArray();
-        JSONObject part = new JSONObject();
-        JSONObject generationConfig = new JSONObject();
-
-        String prompt = "Return only one JSON object: {\"amount\":\"\",\"category\":\"\"}. "
-                + "No markdown, no explanation. "
-                + "Amount is money spent, not item counts. "
-                + "Prefer: " + joinCategories(CategoryManager.getCategories(this)) + ". "
-                + "If none fit, create a short Title Case category. "
-                + "Examples: shares/DSE/stocks=Investments, loan repayment=Loans. "
-                + "Text: " + truncate(text, 180);
-
-        part.put("text", prompt);
-        parts.put(part);
-        content.put("parts", parts);
-        contents.put(content);
-        requestBody.put("contents", contents);
-        generationConfig.put("responseMimeType", "application/json");
-        generationConfig.put("maxOutputTokens", 80);
-        generationConfig.put("temperature", 0);
-        requestBody.put("generationConfig", generationConfig);
-
-        OutputStream outputStream = connection.getOutputStream();
-        outputStream.write(requestBody.toString().getBytes("UTF-8"));
-        outputStream.close();
-
-        int responseCode = connection.getResponseCode();
-        InputStream inputStream = responseCode >= 200 && responseCode < 300
-                ? connection.getInputStream()
-                : connection.getErrorStream();
-        String response = readStream(inputStream);
-        connection.disconnect();
-
-        if (responseCode < 200 || responseCode >= 300) {
-            if (responseCode == HTTP_TOO_MANY_REQUESTS || responseCode == HTTP_UNAVAILABLE) {
-                throw new Exception("AI service busy");
-            }
-            throw new Exception("AI request failed");
-        }
-
-        JSONObject json = new JSONObject(response);
-        String modelText = json.getJSONArray("candidates")
-                .getJSONObject(0)
-                .getJSONObject("content")
-                .getJSONArray("parts")
-                .getJSONObject(0)
-                .getString("text")
-                .trim();
-
-        modelText = extractJsonObject(modelText);
-        JSONObject parsed = new JSONObject(modelText);
-        return new ExpenseResult(
-                parsed.optString("amount", findAmount(text)).replace(",", ""),
-                normalizeCategory(parsed.optString("category", findCategory(text)), text)
-        );
-    }
-
-    private String extractJsonObject(String value) throws Exception {
-        String cleaned = value == null ? "" : value
-                .replace("```json", "")
-                .replace("```", "")
-                .trim();
-
-        int start = cleaned.indexOf("{");
-        int end = cleaned.lastIndexOf("}");
-        if (start >= 0 && end > start) {
-            return cleaned.substring(start, end + 1);
-        }
-
-        throw new Exception("Gemini returned non-JSON text: " + truncate(cleaned, 80));
-    }
-
-    private String readStream(InputStream inputStream) throws Exception {
-        if (inputStream == null) {
-            return "";
-        }
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder builder = new StringBuilder();
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            builder.append(line);
-        }
-
-        reader.close();
-        return builder.toString();
-    }
-
-    private String truncate(String value, int maxLength) {
-        if (value == null || value.length() <= maxLength) {
-            return value;
-        }
-
-        return value.substring(0, maxLength) + "...";
     }
 
     private ExpenseResult fallbackExpense(String text) {
@@ -374,18 +258,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return "0";
-    }
-
-    private String joinCategories(ArrayList<String> categories) {
-        StringBuilder builder = new StringBuilder();
-        int count = Math.min(categories.size(), 12);
-        for (int i = 0; i < count; i++) {
-            if (i > 0) {
-                builder.append(", ");
-            }
-            builder.append(categories.get(i));
-        }
-        return builder.toString();
     }
 
     private String findCategory(String text) {
@@ -445,15 +317,5 @@ public class MainActivity extends AppCompatActivity {
         String oldHistory = prefs.getString(KEY_HISTORY, "");
         String newHistory = record + "\n" + oldHistory;
         prefs.edit().putString(KEY_HISTORY, newHistory).apply();
-    }
-
-    private static class ExpenseResult {
-        String amount;
-        String category;
-
-        ExpenseResult(String amount, String category) {
-            this.amount = amount;
-            this.category = category;
-        }
     }
 }
