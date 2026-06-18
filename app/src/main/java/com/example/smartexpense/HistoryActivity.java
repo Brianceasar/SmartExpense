@@ -3,6 +3,7 @@ package com.example.smartexpense;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -344,6 +345,7 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
     private View createTransactionRow(String record, int index) {
+        final ExpenseRecord expense = parseExpenseRecord(record);
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -356,6 +358,16 @@ public class HistoryActivity extends AppCompatActivity {
         );
         rowParams.setMargins(0, 0, 0, dp(12));
         row.setLayoutParams(rowParams);
+        if (expense.hasCoordinates()) {
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String url = "https://www.google.com/maps/search/?api=1&query="
+                            + expense.latitude + "," + expense.longitude;
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                }
+            });
+        }
 
         TextView icon = new TextView(this);
         icon.setGravity(Gravity.CENTER);
@@ -372,18 +384,34 @@ public class HistoryActivity extends AppCompatActivity {
         row.addView(details, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
         TextView title = new TextView(this);
-        title.setText(extractTitle(record));
+        title.setText(expense.description.length() > 24 ? expense.description.substring(0, 24) + "..." : expense.description);
         title.setTextColor(0xFFFFFFFF);
         title.setTextSize(14);
         title.setTypeface(title.getTypeface(), Typeface.BOLD);
         details.addView(title);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText(extractSubtitle(record));
+        subtitle.setText(expense.date + " - " + expense.category);
         subtitle.setTextColor(0xFFA0AAB8);
         subtitle.setTextSize(10);
         subtitle.setTypeface(subtitle.getTypeface(), Typeface.BOLD);
         details.addView(subtitle);
+
+        if (expense.hasLocationText()) {
+            TextView place = new TextView(this);
+            place.setText(expense.locationLabel());
+            place.setTextColor(0xFFA0AAB8);
+            place.setTextSize(10);
+            details.addView(place);
+        }
+
+        if (expense.hasCoordinates()) {
+            TextView coordinates = new TextView(this);
+            coordinates.setText("GPS: " + expense.latitude + ", " + expense.longitude);
+            coordinates.setTextColor(0xFFA0AAB8);
+            coordinates.setTextSize(10);
+            details.addView(coordinates);
+        }
 
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
@@ -432,25 +460,56 @@ public class HistoryActivity extends AppCompatActivity {
         return category.isEmpty() ? "?" : category.substring(0, 1).toUpperCase(Locale.ROOT);
     }
 
-    private String extractTitle(String record) {
-        String[] parts = record.split("\\|");
-        if (parts.length >= 4) {
-            String title = parts[3].trim();
-            return title.length() > 24 ? title.substring(0, 24) + "..." : title;
-        }
-        return "Expense";
-    }
-
-    private String extractSubtitle(String record) {
-        String[] parts = record.split("\\|");
-        if (parts.length >= 3) {
-            return parts[0].trim() + " - " + parts[2].trim();
-        }
-        return "Verified by AI";
-    }
-
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private ExpenseRecord parseExpenseRecord(String record) {
+        String[] parts = record.split("\\|", -1);
+        ExpenseRecord expense = new ExpenseRecord();
+        expense.date = parts.length > 0 ? parts[0].trim() : "";
+        expense.amount = parts.length > 1 ? parts[1].trim() : "";
+        expense.category = parts.length > 2 ? parts[2].trim() : "General";
+        expense.description = parts.length > 3 ? parts[3].trim() : "Expense";
+
+        if (parts.length >= 10) {
+            expense.latitude = parts[4].trim();
+            expense.longitude = parts[5].trim();
+            expense.accuracy = parts[6].trim();
+            expense.placeName = parts[7].trim();
+            expense.address = parts[8].trim();
+            expense.locationTimestamp = parts[9].trim();
+        }
+
+        return expense;
+    }
+
+    private static final class ExpenseRecord {
+        String date = "";
+        String amount = "";
+        String category = "General";
+        String description = "Expense";
+        String latitude = "";
+        String longitude = "";
+        String accuracy = "";
+        String placeName = "";
+        String address = "";
+        String locationTimestamp = "";
+
+        boolean hasCoordinates() {
+            return !latitude.isEmpty() && !longitude.isEmpty();
+        }
+
+        boolean hasLocationText() {
+            return !placeName.isEmpty() || !address.isEmpty();
+        }
+
+        String locationLabel() {
+            if (!placeName.isEmpty() && !address.isEmpty()) {
+                return placeName + " - " + address;
+            }
+            return !placeName.isEmpty() ? placeName : address;
+        }
     }
 
     private void openLogin() {

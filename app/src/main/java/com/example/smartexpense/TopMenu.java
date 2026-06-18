@@ -3,7 +3,6 @@ package com.example.smartexpense;
 import android.content.Intent;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
@@ -30,7 +29,9 @@ final class TopMenu {
                     public boolean onMenuItemClick(MenuItem item) {
                         String title = item.getTitle().toString();
                         if ("Settings".equals(title)) {
-                            Toast.makeText(activity, "Settings will be available soon.", Toast.LENGTH_SHORT).show();
+                            if (!(activity instanceof ProfileActivity)) {
+                                activity.startActivity(new Intent(activity, ProfileActivity.class));
+                            }
                             return true;
                         }
 

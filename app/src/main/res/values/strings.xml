@@ -82,6 +82,9 @@
     <string name="profile_budget_amount_hint">Amount in TZS</string>
     <string name="profile_budget_save">Save</string>
     <string name="profile_budget_cancel">Cancel</string>
+    <string name="profile_edit_name_title">Edit Name</string>
+    <string name="profile_edit_name_error">Enter your name</string>
+    <string name="profile_name_updated">Name updated</string>
     <string name="profile_security_privacy">Security &amp; Privacy</string>
     <string name="profile_notifications">Notifications</string>
     <string name="profile_logout">Logout</string>
@@ -93,4 +96,6 @@
     <string name="add_example_title">Try examples</string>
     <string name="add_example_one">Spent 25,000 TZS on lunch</string>
     <string name="add_example_two">Paid 80,000 TZS for electricity</string>
+    <string name="add_use_current_location">Use Current Location</string>
+    <string name="add_location_waiting">Location not captured</string>
 </resources>

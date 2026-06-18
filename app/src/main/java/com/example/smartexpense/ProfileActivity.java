@@ -24,7 +24,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private Button btnLogout;
     private TextView profileName, profileEmail, profileAvatar, personalInfoName, personalInfoEmail, profileBudgetSummary;
-    private View personalInfoRow, personalInfoDetails, budgetRow;
+    private View personalInfoRow, personalInfoDetails, budgetRow, profileEditBadge;
     private BottomNavigationView nav;
 
     @Override
@@ -42,6 +42,7 @@ public class ProfileActivity extends AppCompatActivity {
         profileName = (TextView) findViewById(R.id.profileName);
         profileEmail = (TextView) findViewById(R.id.profileEmail);
         profileAvatar = (TextView) findViewById(R.id.profileAvatar);
+        profileEditBadge = findViewById(R.id.profileEditBadge);
         personalInfoName = (TextView) findViewById(R.id.personalInfoName);
         personalInfoEmail = (TextView) findViewById(R.id.personalInfoEmail);
         profileBudgetSummary = (TextView) findViewById(R.id.profileBudgetSummary);
@@ -52,14 +53,19 @@ public class ProfileActivity extends AppCompatActivity {
         nav = (BottomNavigationView) findViewById(R.id.bottomNavigation);
         nav.setSelectedItemId(R.id.nav_profile);
 
-        String name = AuthManager.getUserName(this);
-        String email = AuthManager.getUserEmail(this);
-        profileName.setText(name);
-        profileEmail.setText(email);
-        personalInfoName.setText(name);
-        personalInfoEmail.setText(email);
-        profileAvatar.setText(getInitial(name, email));
+        updateUserProfile();
         updateBudgetSummary();
+
+        View.OnClickListener editNameListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showEditNameDialog();
+            }
+        };
+        profileAvatar.setOnClickListener(editNameListener);
+        profileEditBadge.setOnClickListener(editNameListener);
+        profileName.setOnClickListener(editNameListener);
+        personalInfoName.setOnClickListener(editNameListener);
 
         personalInfoRow.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,8 +128,54 @@ public class ProfileActivity extends AppCompatActivity {
         return source.trim().substring(0, 1).toUpperCase();
     }
 
+    private void updateUserProfile() {
+        String name = AuthManager.getUserName(this);
+        String email = AuthManager.getUserEmail(this);
+        profileName.setText(name);
+        profileEmail.setText(email);
+        personalInfoName.setText(name);
+        personalInfoEmail.setText(email);
+        profileAvatar.setText(getInitial(name, email));
+    }
+
     private void updateBudgetSummary() {
         profileBudgetSummary.setText(BudgetManager.getBudgetSummary(this));
+    }
+
+    private void showEditNameDialog() {
+        final EditText nameInput = new EditText(this);
+        int padding = dp(20);
+        nameInput.setPadding(padding, dp(10), padding, 0);
+        nameInput.setHint(R.string.auth_full_name_hint);
+        nameInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
+        nameInput.setSingleLine(true);
+        nameInput.setSelectAllOnFocus(true);
+        nameInput.setText(AuthManager.getUserName(this));
+
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.profile_edit_name_title)
+                .setView(nameInput)
+                .setNegativeButton(R.string.profile_budget_cancel, null)
+                .setPositiveButton(R.string.profile_budget_save, null)
+                .create();
+
+        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String name = nameInput.getText().toString().trim();
+                if (name.isEmpty()) {
+                    nameInput.setError(getString(R.string.profile_edit_name_error));
+                    return;
+                }
+
+                AuthManager.updateUserName(ProfileActivity.this, name);
+                updateUserProfile();
+                Toast.makeText(ProfileActivity.this, R.string.profile_name_updated, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        }));
+
+        dialog.show();
     }
 
     private void showBudgetDialog() {

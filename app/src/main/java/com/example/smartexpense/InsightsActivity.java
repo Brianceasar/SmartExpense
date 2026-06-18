@@ -160,6 +160,7 @@ public class InsightsActivity extends AppCompatActivity {
         String history = prefs.getString(KEY_HISTORY, "");
         String[] records = history.trim().isEmpty() ? new String[0] : history.split("\\n");
         LinkedHashMap<String, Integer> totals = new LinkedHashMap<String, Integer>();
+        StringBuilder locations = new StringBuilder();
         int total = 0;
         int count = 0;
 
@@ -176,6 +177,10 @@ public class InsightsActivity extends AppCompatActivity {
             String category = CategoryManager.getRecordCategory(clean);
             total += amount;
             totals.put(category, totals.containsKey(category) ? totals.get(category) + amount : amount);
+            String location = extractLocationSummary(clean);
+            if (!location.isEmpty()) {
+                appendLocation(locations, location);
+            }
             count++;
         }
 
@@ -195,7 +200,34 @@ public class InsightsActivity extends AppCompatActivity {
                 break;
             }
         }
+        if (locations.length() > 0) {
+            summary.append("; locations=").append(locations);
+        }
         return summary.toString();
+    }
+
+    private void appendLocation(StringBuilder locations, String location) {
+        if (locations.length() > 0) {
+            locations.append(",");
+        }
+        locations.append(location);
+    }
+
+    private String extractLocationSummary(String record) {
+        String[] parts = record.split("\\|", -1);
+        if (parts.length < 10) {
+            return "";
+        }
+
+        String placeName = parts[7].trim();
+        String address = parts[8].trim();
+        if (!placeName.isEmpty() && !address.isEmpty()) {
+            return placeName + "@" + address;
+        }
+        if (!placeName.isEmpty()) {
+            return placeName;
+        }
+        return address;
     }
 
     private ArrayList<String> localInsights() {

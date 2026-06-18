@@ -52,6 +52,10 @@ final class AuthManager {
         return getPrefs(context).getString(KEY_NAME, "");
     }
 
+    static void updateUserName(Context context, String name) {
+        getPrefs(context).edit().putString(KEY_NAME, name).apply();
+    }
+
     static String getUserEmail(Context context) {
         return getPrefs(context).getString(KEY_EMAIL, "");
     }
