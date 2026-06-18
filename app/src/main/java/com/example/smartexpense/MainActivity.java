@@ -11,6 +11,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +40,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat;
@@ -60,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_HISTORY = "history";
     private static final String TAG = "SmartExpenseAI";
     private static final int LOCATION_PERMISSION_REQUEST = 41;
+    private static final long LOCATION_FIX_TIMEOUT_MS = 15000;
+    private static final float LOW_ACCURACY_THRESHOLD_METERS = 100f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -205,54 +210,74 @@ public class MainActivity extends AppCompatActivity {
         btnUseLocation.setEnabled(false);
         btnUseLocation.setText("Capturing location...");
 
-        // LocationManager reads device GPS/network provider data for latitude, longitude, accuracy, and time.
-        Location bestLocation = getBestLastKnownLocation(locationManager);
-        if (bestLocation != null) {
-            handleLocation(bestLocation);
-            return;
-        }
+        requestFreshBestLocation(locationManager);
+    }
 
+    private void requestFreshBestLocation(final LocationManager locationManager) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Location[] bestLocation = new Location[1];
+        final LocationListener listener = new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                logLocationFix(location);
+                if (bestLocation[0] == null || location.getAccuracy() < bestLocation[0].getAccuracy()) {
+                    bestLocation[0] = location;
+                    capturedLocation = new LocationData(location);
+                    showCapturedLocation();
+                }
+            }
+
+            @Override
+            public void onProviderDisabled(@NonNull String provider) {
+                if (LocationManager.GPS_PROVIDER.equals(provider)) {
+                    Toast.makeText(MainActivity.this, "Enable GPS for better location accuracy", Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
+
+        boolean requested = false;
         try {
-            String provider = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-                    ? LocationManager.GPS_PROVIDER
-                    : LocationManager.NETWORK_PROVIDER;
-            locationManager.requestSingleUpdate(provider, new LocationListener() {
-                @Override
-                public void onLocationChanged(@NonNull Location location) {
-                    handleLocation(location);
-                }
-
-                @Override
-                public void onProviderDisabled(@NonNull String provider) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            resetLocationButton();
-                            Toast.makeText(MainActivity.this, "Enable location services to capture GPS", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }, null);
+            // LocationManager requests fresh GPS/network provider data; GPS is preferred for exact place matching.
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener, Looper.getMainLooper());
+                requested = true;
+            }
+            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, listener, Looper.getMainLooper());
+                requested = true;
+            }
         } catch (Exception e) {
             resetLocationButton();
             Toast.makeText(this, "Could not request location", Toast.LENGTH_SHORT).show();
+            return;
         }
-    }
 
-    private Location getBestLastKnownLocation(LocationManager locationManager) {
-        Location bestLocation = null;
-        List<String> providers = locationManager.getProviders(true);
-        for (String provider : providers) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return null;
-            }
-            Location location = locationManager.getLastKnownLocation(provider);
-            if (location != null && (bestLocation == null || location.getAccuracy() < bestLocation.getAccuracy())) {
-                bestLocation = location;
-            }
+        if (!requested) {
+            resetLocationButton();
+            Toast.makeText(this, "Enable location services to capture GPS", Toast.LENGTH_SHORT).show();
+            return;
         }
-        return bestLocation;
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                locationManager.removeUpdates(listener);
+                if (bestLocation[0] == null) {
+                    resetLocationButton();
+                    Toast.makeText(MainActivity.this, "Could not get current location", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (bestLocation[0].getAccuracy() > LOW_ACCURACY_THRESHOLD_METERS) {
+                    Toast.makeText(
+                            MainActivity.this,
+                            "Location accuracy is low. Move outside or enable precise location.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+                handleLocation(bestLocation[0]);
+            }
+        }, LOCATION_FIX_TIMEOUT_MS);
     }
 
     private void handleLocation(final Location location) {
@@ -310,9 +335,24 @@ public class MainActivity extends AppCompatActivity {
             throw new Exception("missing Maps API key");
         }
 
+        if (tryPlacesLookup(data, "&radius=150&type=university")) {
+            return;
+        }
+        if (tryPlacesLookup(data, "&radius=200&keyword="
+                + URLEncoder.encode("institute university college school", "UTF-8"))) {
+            return;
+        }
+        if (tryPlacesLookup(data, "&radius=150")) {
+            return;
+        }
+
+        throw new Exception("no nearby place");
+    }
+
+    private boolean tryPlacesLookup(LocationData data, String query) throws Exception {
         String urlValue = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
                 + "?location=" + data.latitude + "," + data.longitude
-                + "&radius=75"
+                + query
                 + "&key=" + BuildConfig.MAPS_API_KEY;
         HttpURLConnection connection = (HttpURLConnection) new URL(urlValue).openConnection();
         connection.setRequestMethod("GET");
@@ -327,18 +367,24 @@ public class MainActivity extends AppCompatActivity {
         connection.disconnect();
 
         if (responseCode < 200 || responseCode >= 300) {
-            throw new Exception("Places request failed");
+            Log.w(TAG, "Places request failed, code=" + responseCode);
+            return false;
         }
 
         JSONObject json = new JSONObject(response);
+        String status = json.optString("status", "");
         JSONArray results = json.optJSONArray("results");
+        int count = results == null ? 0 : results.length();
+        String selectedName = count == 0 ? "" : results.getJSONObject(0).optString("name", "");
+        Log.d(TAG, "Places status=" + status + ", results=" + count + ", selected=" + selectedName);
         if (results == null || results.length() == 0) {
-            throw new Exception("no nearby place");
+            return false;
         }
 
         JSONObject first = results.getJSONObject(0);
         data.placeName = first.optString("name", "");
         data.address = first.optString("vicinity", "");
+        return !data.placeName.isEmpty();
     }
 
     private void resolvePlaceWithGeocoder(LocationData data) throws Exception {
@@ -349,7 +395,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Address address = addresses.get(0);
-        data.placeName = address.getFeatureName() == null ? "" : address.getFeatureName();
         data.address = address.getAddressLine(0) == null ? "" : address.getAddressLine(0);
     }
 
@@ -383,6 +428,15 @@ public class MainActivity extends AppCompatActivity {
 
     private String valueOrUnknown(String value) {
         return value == null || value.trim().isEmpty() ? "Unknown" : value;
+    }
+
+    private void logLocationFix(Location location) {
+        long ageMs = Math.max(0, System.currentTimeMillis() - location.getTime());
+        Log.d(TAG, "Location provider=" + location.getProvider()
+                + ", lat=" + location.getLatitude()
+                + ", lng=" + location.getLongitude()
+                + ", accuracy=" + location.getAccuracy()
+                + ", ageMs=" + ageMs);
     }
 
     private void resetLocationButton() {
